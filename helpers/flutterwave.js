@@ -52,7 +52,7 @@ class Rave {
 		return new Promise((resolve, reject) => {
 			let encrypted_card_details = this.encryptCardDetails(card_details);
 			let payment_options = Object.assign({}, options);
-			payment_options.url = payment_url;
+			payment_options.url = `${payment_url}/charge`;
 			payment_options.data.client = encrypted_card_details;
 			payment_options.method = 'post';
 			payment_options.data.PBFPubKey = this.public_key;
