@@ -164,4 +164,46 @@ router.post(
 	}
 );
 
+/*
+fund wallet endpoint
+*/
+
+router.post(
+	'/charge-wallet',
+	authUser,
+	[ check('amount', 'Wallet fund amount is required').notEmpty().isNumeric() ],
+	async (req, res) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({ status: 'fail', errors: errors.array() });
+		}
+
+		const user_id = req.user.id;
+		const amount = req.body.amount;
+
+		const userWallet = await Wallet.findOne({ userID: user_id });
+
+		if (!userWallet) {
+			return res.status(404).send({ status: 'fail', message: 'User has no wallet' });
+		}
+
+		if (userWallet.availableBalance < amount) {
+			return res.status(400).send({ status: 'fail', message: 'Insufficient funds' });
+		}
+
+		try {
+			const wallet = await Wallet.findOneAndUpdate(
+				{ userID: user_id },
+				{ $inc: { ledgerBalance: -amount, availableBalance: -amount } },
+				{ new: true }
+			);
+
+			return res.status(200).send({ status: 'success', data: wallet });
+		} catch (error) {
+			console.log('Wallet charge error', error.message);
+			return res.status(500).send({ status: 'fail', message: error.message });
+		}
+	}
+);
+
 module.exports = router;
